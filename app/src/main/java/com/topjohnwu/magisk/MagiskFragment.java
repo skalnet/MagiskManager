@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.topjohnwu.magisk.receivers.DownloadReceiver;
 import com.topjohnwu.magisk.utils.Async;
 import com.topjohnwu.magisk.utils.Utils;
 
@@ -28,9 +29,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MagiskFragment extends Fragment {
-
-    @BindView(R.id.progressBarVersion) ProgressBar progressBar;
-
     @BindView(R.id.magiskStatusView) View magiskStatusView;
     @BindView(R.id.magisk_status_container) View magiskStatusContainer;
     @BindView(R.id.magisk_status_icon) ImageView magiskStatusIcon;
@@ -72,6 +70,21 @@ public class MagiskFragment extends Fragment {
         ta0.recycle();
         ta1.recycle();
         ta2.recycle();
+
+        if (Utils.magiskVersion == -1) {
+            magiskStatusContainer.setBackgroundColor(grey500);
+            magiskStatusIcon.setImageResource(statusUnknown);
+
+            magiskVersion.setTextColor(grey500);
+            magiskVersion.setText(R.string.magisk_version_error);
+        } else {
+            magiskStatusContainer.setBackgroundColor(colorOK);
+            magiskStatusIcon.setImageResource(statusOK);
+
+            magiskVersion.setText(getString(R.string.magisk_version, String.valueOf(Utils.magiskVersion)));
+            magiskVersion.setTextColor(colorOK);
+        }
+
         new updateUI().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
 
         return v;
@@ -123,6 +136,7 @@ public class MagiskFragment extends Fragment {
                 magiskCheckUpdatesIcon.setImageResource(R.drawable.ic_warning);
 
                 appCheckUpdatesStatus.setText(R.string.cannot_check_updates);
+                appCheckUpdatesStatus.setTextColor(colorWarn);
                 magiskCheckUpdatesStatus.setText(R.string.cannot_check_updates);
                 magiskCheckUpdatesStatus.setTextColor(colorWarn);
             } else {
@@ -137,7 +151,7 @@ public class MagiskFragment extends Fragment {
                             .setCancelable(true)
                             .setPositiveButton(R.string.download_install, (dialogInterface, i) -> Utils.downloadAndReceive(
                                     getActivity(),
-                                    new Utils.DownloadReceiver(getString(R.string.magisk)) {
+                                    new DownloadReceiver(getString(R.string.magisk)) {
                                         @Override
                                         public void task(File file) {
                                             new Async.FlashZIP(mContext, mName, file.getPath()).executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
@@ -163,7 +177,7 @@ public class MagiskFragment extends Fragment {
                             .setMessage(getString(R.string.update_msg, getString(R.string.app_name), String.valueOf(Utils.remoteAppVersion), Utils.appChangelog))
                             .setCancelable(true)
                             .setPositiveButton(R.string.download_install, (dialogInterface, i) -> Utils.downloadAndReceive(getActivity(),
-                                    new Utils.DownloadReceiver() {
+                                    new DownloadReceiver() {
                                         @Override
                                         public void task(File file) {
                                             Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
@@ -185,7 +199,6 @@ public class MagiskFragment extends Fragment {
                 }
             }
 
-            progressBar.setVisibility(View.GONE);
             appCheckUpdatesProgress.setVisibility(View.GONE);
             magiskCheckUpdatesProgress.setVisibility(View.GONE);
         }
