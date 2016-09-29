@@ -9,7 +9,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +17,8 @@ import android.widget.ListView;
 
 import com.topjohnwu.magisk.utils.ApplicationAdapter;
 import com.topjohnwu.magisk.utils.Logger;
+import com.topjohnwu.magisk.utils.Shell;
+import com.topjohnwu.magisk.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,8 +63,8 @@ public class AutoRootFragment extends ListFragment {
     public void onResume() {
         super.onResume();
         initializeElements();
-            super.onResume();
-            getActivity().setTitle(R.string.auto_toggle);
+        super.onResume();
+        getActivity().setTitle(R.string.auto_toggle);
 
 
     }
@@ -74,6 +75,12 @@ public class AutoRootFragment extends ListFragment {
         new LoadApplications().execute();
     }
 
+    private boolean hasSuHide() {
+        return Utils.itemExist("/su/suhide/suhide.uid");
+
+    }
+
+
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         Logger.dev("Click");
@@ -81,21 +88,29 @@ public class AutoRootFragment extends ListFragment {
         ApplicationInfo app = applist.get(position);
         ToggleApp(app.packageName, position, v);
 
+
     }
 
+
+
     private void ToggleApp(String appToCheck, int position, View v) {
-        Logger.dev("Magisk","AutoRootFragment: ToggleApp called for " + appToCheck);
+        Logger.dev("Magisk", "AutoRootFragment: ToggleApp called for " + appToCheck);
         Set<String> blackListSet = prefs.getStringSet("auto_blacklist", null);
         assert blackListSet != null;
         arrayBlackList = new ArrayList<>(blackListSet);
 
         if (!arrayBlackList.contains(appToCheck)) {
             arrayBlackList.add(appToCheck);
-
+            if (hasSuHide()) {
+                Utils.ToggleSuHide(appToCheck, false);
+            }
         } else {
             for (int i = 0; i < arrayBlackList.size(); i++) {
                 if (appToCheck.equals(arrayBlackList.get(i))) {
                     arrayBlackList.remove(i);
+                    if (hasSuHide()) {
+                        Utils.ToggleSuHide(appToCheck, true);
+                    }
                 }
             }
 

@@ -103,6 +103,11 @@ public class ApplicationAdapter extends ArrayAdapter<ApplicationInfo> {
             for (String string : set) {
                 if (string.equals(appToCheck)) {
                     starter = true;
+                    if (Utils.itemExist("/su/suhide/suhide.uid")) {
+                        packageManager = context.getPackageManager();
+                        Utils.ToggleSuHide(appToCheck, true);
+
+                    }
                 }
             }
         }

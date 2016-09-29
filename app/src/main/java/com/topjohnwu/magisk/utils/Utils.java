@@ -72,7 +72,12 @@ public class Utils {
         } else {
             ret = Shell.sh(command);
         }
-        return Boolean.parseBoolean(ret.get(0));
+        if (ret.size()==0) {
+            return false;
+        } else {
+            return Boolean.parseBoolean(ret.get(0));
+        }
+
     }
 
     public static boolean commandExists(String s) {
@@ -139,6 +144,44 @@ public class Utils {
         }
         if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean("enable_quicktile", false)) {
             setupQuickSettingsTile(context);
+        }
+    }
+
+    public static void ToggleSuHide(String packageName, Boolean addRemove) {
+        String searchString = "ls -nld /data/data/" + packageName;
+        String searchUID;
+        Boolean hasRoot = Shell.rootAccess();
+        if (hasRoot) {
+            searchUID = Shell.su(searchString).toString();
+
+        } else {
+            searchUID = Shell.sh(searchString).toString();
+        }
+        if (!searchUID.equals("")) {
+            String[] uidString = searchUID.split(" ");
+            if (uidString.length >= 3) {
+                searchUID = uidString[9].trim();
+            }
+            int tempcount = 0;
+            for (String uID : uidString) {
+                Logger.dev("Utils: UID Breakup is " + uID + " at position " + tempcount);
+                tempcount +=1;
+            }
+            Logger.dev("AutoRootFragment: Result for UID from " + searchString + " is " + searchUID);
+
+            String toggleString;
+            if (addRemove) {
+                Logger.dev("Utils: Enabling app of " + searchUID + " in SuHide");
+                toggleString = "/su/suhide/add " + searchUID;
+            } else {
+                Logger.dev("Utils: Disabling app of " + searchUID + " in SuHide");
+                toggleString = "/su/suhide/remove " + searchUID;
+            }
+            if (hasRoot) {
+                Shell.su(toggleString);
+            } else {
+                Shell.sh(toggleString);
+            }
         }
     }
 
